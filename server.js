@@ -4,36 +4,65 @@ const app = express();
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
-const mockUserData=[
-    { name:'Mark' },
-    { name:'Jill' }
-];
+const users = new Map();
 
 app.get('/users', function(req, res){
+    const usersArr = new Array();
+    for (let user of users.keys()){ // mejor manera de mandar todas las keys?
+        usersArr.push(user);
+    }
     res.json({
         success: true,
         message: 'successfully got users. Nice!',
-        users: mockUserData
+        users: usersArr 
     })
 });
 
 app.get('/users/:id',function(req,res){
-	console.log(req.params.id)
-	res.json({
-		success: true,
-		message: 'got one user',
-		user: req.params.id
-	})
+    const userData = users.get(req.params.id)
+    if (userData){
+        res.json({
+            success: true,
+            message: 'got the user',
+            description: userData.desc
+        })
+    }else{
+        res.json({
+            success: false,
+            message: 'user not found',
+        })
+    }
+    
+});
+
+app.post('/signIn', function(req, res){
+    const user = req.body.username;
+    const userData = {
+        pass: req.body.password,
+        desc: req.body.description
+    };
+    if (users.get(user)){
+        res.json({
+            success: false,
+            message: 'Usename already exist',
+        });
+    }else{
+        users.set(user, userData);
+        console.log(`User ${user} added to the system`)
+        res.json({
+            success: true,
+            message: 'Succesfull sign in'
+        });
+    }
+
 });
 
 app.post('/login', function(req, res){
     const user = req.body.username;
     const pass = req.body.password;
 
-    const TestUs = "billy"
-    const TestPass = "1234"
-
-    if (user === TestUs && pass === TestPass){
+    const userData = users.get(user);
+    if (userData && userData.pass === pass){ // Capas que solo userData?.pass === pass funciona? border case con password undefined
         res.json({
             success: true,
             message: 'password and username matched :D',
